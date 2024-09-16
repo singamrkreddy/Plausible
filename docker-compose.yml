@@ -9,6 +9,8 @@ services:
       - db-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"  # Port mapping for PostgreSQL  
     networks:
       - plausible
 
@@ -20,6 +22,9 @@ services:
       - event-logs:/var/log/clickhouse-server
       - ./clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
       - ./clickhouse/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro
+    ports:
+      - "8123:8123"  # Port mapping for ClickHouse HTTP interface
+      - "9000:9000"  # Port mapping for ClickHouse native interface  
     ulimits:
       nofile:
         soft: 262144
