@@ -1,6 +1,6 @@
 server {
 	# replace example.com with your domain name
-	server_name example.com;
+	server_name itsmydomain.site;
 	
 	listen 80;
 	listen [::]:80;
