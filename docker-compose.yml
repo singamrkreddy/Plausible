@@ -1,61 +1,74 @@
-# version: "3.3"
 services:
+  # Adding the nginx image here
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    networks:
+      - plausible
+
+  mail:
+    image: bytemark/smtp
+    restart: always
+    networks:
+      - plausible # Network containers
+
   plausible_db:
-    # Plausible v2.1.1 was tested against PostgreSQL versions 15 and 16
-    # https://github.com/plausible/analytics/blob/v2.1.1/.github/workflows/elixir.yml#L21-L32
-    image: postgres:16-alpine
+    # supported versions are 12, 13, and 14
+    image: postgres:14-alpine
     restart: always
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=postgres
-    ports:
-      - "5432:5432"  # Port mapping for PostgreSQL  
     networks:
-      - plausible
+      - plausible # Network containers
 
   plausible_events_db:
-    image: clickhouse/clickhouse-server:24.3.3.102-alpine
+    image: clickhouse/clickhouse-server:22.6-alpine
     restart: always
     volumes:
       - event-data:/var/lib/clickhouse
-      - event-logs:/var/log/clickhouse-server
       - ./clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
       - ./clickhouse/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro
-    ports:
-      - "8123:8123"  # Port mapping for ClickHouse HTTP interface
-      - "9000:9000"  # Port mapping for ClickHouse native interface  
     ulimits:
       nofile:
         soft: 262144
         hard: 262144
     networks:
-      - plausible
+      - plausible # Network containers
 
   plausible:
-    image: ghcr.io/plausible/community-edition:v2.1.1
+    image: plausible/analytics:latest
+    container_name: plausible # Make sure this container has a name and matches what you have in nginx.conf
     restart: always
     command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
     depends_on:
       - plausible_db
       - plausible_events_db
+      - mail
     ports:
-      - 10.0.0.49:8000:8000
+      - 127.0.0.1:8000:8000 # Adding 127.0.0.1 will stop Plausible being exposed globally
     env_file:
       - plausible-conf.env
     networks:
-      - plausible
+      - plausible # Network containers
 
 volumes:
   db-data:
     driver: local
   event-data:
     driver: local
-  event-logs:
+  geoip:
     driver: local
 
-#Add the network
+# Add the network 
 networks:
   plausible:
-    name: plausible
     driver: bridge
