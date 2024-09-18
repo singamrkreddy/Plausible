@@ -1,31 +1,4 @@
 services:
-  # Adding the nginx image here
-  nginx:
-    image: nginx:alpine
-    container_name: nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    networks:
-      - plausible
-  certbot:
-     image: certbot/certbot
-     container_name: certbot
-     volumes:
-       - ./certbot/conf:/etc/letsencrypt
-       - ./certbot/www:/var/www/certbot
-     command: certonly --webroot -w /var/www/certbot --force-renewal --email singamrkreddy@outlook.com -d itsmydomain.site --agree-tos    
-
-  mail:
-    image: bytemark/smtp
-    restart: always
-    networks:
-      - plausible # Network containers
-
   plausible_db:
     # supported versions are 12, 13, and 14
     image: postgres:14-alpine
