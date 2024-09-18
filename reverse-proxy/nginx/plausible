@@ -1,6 +1,6 @@
 server {
   listen 80;
-  server_name <your-domain-name>;
+  server_name itsmydomain.site;
   resolver 127.0.0.11;
   location ~ /.well-known/acme-challenge/ {
     root /var/www/certbot;
