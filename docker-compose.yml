@@ -1,54 +1,43 @@
 services:
   plausible_db:
-    # supported versions are 12, 13, and 14
-    image: postgres:14-alpine
+    # Plausible v2.1.1 was tested against PostgreSQL versions 15 and 16
+    # https://github.com/plausible/analytics/blob/v2.1.1/.github/workflows/elixir.yml#L21-L32
+    image: postgres:16-alpine
     restart: always
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=postgres
-    networks:
-      - plausible # Network containers
 
   plausible_events_db:
-    image: clickhouse/clickhouse-server:22.6-alpine
+    image: clickhouse/clickhouse-server:24.3.3.102-alpine
     restart: always
     volumes:
       - event-data:/var/lib/clickhouse
+      - event-logs:/var/log/clickhouse-server
       - ./clickhouse/clickhouse-config.xml:/etc/clickhouse-server/config.d/logging.xml:ro
       - ./clickhouse/clickhouse-user-config.xml:/etc/clickhouse-server/users.d/logging.xml:ro
     ulimits:
       nofile:
         soft: 262144
         hard: 262144
-    networks:
-      - plausible # Network containers
 
   plausible:
-    image: plausible/analytics:latest
-    container_name: plausible # Make sure this container has a name and matches what you have in nginx.conf
+    image: ghcr.io/plausible/community-edition:v2.1.1
     restart: always
     command: sh -c "sleep 10 && /entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
     depends_on:
       - plausible_db
       - plausible_events_db
-      - mail
     ports:
-      - 127.0.0.1:8000:8000 # Adding 127.0.0.1 will stop Plausible being exposed globally
+      - 127.0.0.1:8000:8000
     env_file:
       - plausible-conf.env
-    networks:
-      - plausible # Network containers
 
 volumes:
   db-data:
     driver: local
   event-data:
     driver: local
-  geoip:
+  event-logs:
     driver: local
-
-# Add the network 
-networks:
-  plausible:
-    driver: bridge
