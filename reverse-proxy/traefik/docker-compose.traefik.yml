@@ -3,6 +3,6 @@ services:
   plausible:
     labels:
       traefik.enable: "true"
-      traefik.http.routers.plausible.rule: "Host(`example.com`)" # change to your domain name
+      traefik.http.routers.plausible.rule: "Host(`itsmydomain.site`)" # change to your domain name
       traefik.http.routers.plausible.entrypoints: "websecure"
       traefik.http.services.plausible.loadbalancer.server.port: "8000"
